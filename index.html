@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steuerreform-Rechner 2026 · G-Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════════════════════════════
+   G-DESIGN — Template v1.0
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tokens ─────────────────────────────────────────────────── */
+:root,[data-theme="dark"]{
+  --bg:        #0c1410;
+  --surface:   #13201a;
+  --surface2:  #192b22;
+  --border:    #213328;
+  --accent:    #5d9e7a;
+  --accent-lt: #89c4a2;
+  --accent-dim:rgba(93,158,122,0.13);
+  --text:      #ddeee5;
+  --text-muted:#6e9480;
+}
+[data-theme="light"]{
+  --bg:        #f0f7f3;
+  --surface:   #ffffff;
+  --surface2:  #e6f2eb;
+  --border:    #bdd8c8;
+  --accent:    #2e7a50;
+  --accent-lt: #1e5c3a;
+  --accent-dim:rgba(46,122,80,0.10);
+  --text:      #0f1f16;
+  --text-muted:#4d7a5e;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme]){
+    --bg:#f0f7f3;--surface:#ffffff;--surface2:#e6f2eb;--border:#bdd8c8;
+    --accent:#2e7a50;--accent-lt:#1e5c3a;--accent-dim:rgba(46,122,80,0.10);
+    --text:#0f1f16;--text-muted:#4d7a5e;
+  }
+}
+
+/* ── App-spezifische Farb-Tokens ────────────────────────────── */
+:root,[data-theme="dark"]{--pos:#5d9e7a;--neg:#c05a50;}
+[data-theme="light"]{--pos:#2e7a50;--neg:#a03828;}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme]){--pos:#2e7a50;--neg:#a03828;}
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+html{overflow-x:hidden;}
+
+/* ── Body & Background Grid ─────────────────────────────────── */
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;font-weight:300;
+  min-height:100vh;padding:40px 16px 80px;
+  transition:background .25s,color .25s;
+  overflow-x:hidden;
+  max-width:100vw;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(93,158,122,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(93,158,122,0.04) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.container{max-width:920px;margin:0 auto;position:relative;z-index:1;width:100%;}
+
+/* ── Theme Toggle ───────────────────────────────────────────── */
+.theme-toggle{
+  position:fixed;top:12px;right:12px;display:flex;gap:3px;
+  z-index:1000;background:var(--surface);border:1px solid var(--border);padding:4px;
+}
+
+.theme-btn{
+  width:28px;height:28px;background:transparent;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);transition:all .2s;padding:0;
+}
+.theme-btn:hover{color:var(--accent);}
+.theme-btn.active{color:var(--accent);background:var(--accent-dim);}
+.theme-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Mobile-inline-toggle (only visible on small screens) */
+.theme-toggle-mobile{
+  display:none;justify-content:center;gap:3px;
+  margin:-32px 0 24px;
+}
+.theme-toggle-mobile .theme-btn{
+  width:32px;height:32px;background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  color:var(--text-muted);transition:all .2s;
+}
+.theme-toggle-mobile .theme-btn.active{color:var(--accent);background:var(--accent-dim);}
+@media(max-width:540px){
+  .theme-toggle{display:none!important;}
+  .theme-toggle-mobile{display:flex;}
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+header{text-align:center;margin-bottom:48px;}
+.badge{
+  display:inline-block;font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);border:1px solid var(--accent-dim);
+  padding:4px 14px;margin-bottom:18px;
+}
+h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(26px,5vw,44px);font-weight:600;
+  line-height:1.15;color:var(--text);margin-bottom:10px;
+}
+h1 span{color:var(--accent);}
+.subtitle{
+  font-size:12px;color:var(--text-muted);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;
+  line-height:1.7;
+}
+
+/* ── Variant-Toggle ─────────────────────────────────────────── */
+.variant-toggle{
+  margin-top:16px;display:inline-flex;gap:0;border:1px solid var(--border);
+}
+.variant-btn{
+  background:transparent;border:none;padding:7px 16px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-muted);cursor:pointer;transition:all .2s;
+}
+.variant-btn.active{background:var(--accent-dim);color:var(--accent);}
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:24px 28px;margin-bottom:16px;
+  position:relative;transition:background .25s,border-color .25s;
+  min-width:0;max-width:100%;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:3px;height:100%;background:var(--accent);
+}
+.card-title{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:18px;
+}
+
+/* ── Accent Card ────────────────────────────────────────────── */
+.accent-card{
+  background:var(--surface);border:1px solid var(--accent);
+  padding:28px;margin-bottom:16px;transition:background .25s;
+  position:relative;
+}
+.accent-card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:3px;height:100%;background:var(--accent);
+}
+
+/* ── Formular-Elemente ──────────────────────────────────────── */
+select,input[type="number"],input[type="text"]{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-family:'IBM Plex Mono',monospace;
+  font-size:12px;padding:6px 8px;outline:none;
+  transition:border-color .2s,background .25s;
+}
+select:focus,input:focus{border-color:var(--accent);}
+input[type="number"]{-moz-appearance:textfield;appearance:textfield;}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.hint{
+  font-size:10px;color:var(--text-muted);margin-top:5px;
+  font-family:'IBM Plex Mono',monospace;line-height:1.5;
+}
+.hint b{color:var(--accent-lt);}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:1px;padding:8px 16px;
+  cursor:pointer;transition:all .2s;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Ergebnis-Zeilen ────────────────────────────────────────── */
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;
+}
+.result-row:last-child{border-bottom:none;}
+.result-row .rl{
+  color:var(--text-muted);font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:1px;max-width:68%;
+}
+.result-row .rv{
+  font-family:'IBM Plex Mono',monospace;font-size:14px;
+  font-weight:400;white-space:nowrap;
+}
+.result-total{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-top:18px;border-top:1px solid var(--accent);margin-top:8px;
+}
+.result-total-label,.result-total-value{
+  font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:400;
+}
+
+/* ── Note ───────────────────────────────────────────────────── */
+.note{
+  font-size:10px;color:var(--text-muted);margin-top:14px;
+  line-height:1.7;font-family:'IBM Plex Mono',monospace;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+footer{
+  text-align:center;padding:32px 0 24px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:1px;color:var(--text-muted);opacity:0.6;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media(max-width:680px){
+  .card,.accent-card{padding:18px 16px;}
+  .two-col{grid-template-columns:1fr!important;}
+  .four-col{grid-template-columns:1fr 1fr!important;}
+}
+@media(max-width:540px){
+  body{padding:12px 12px 60px;}
+  .compare-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .cmp-card{padding:12px 12px;}
+  .cmp-main{font-size:20px;}
+  .cmp-label{font-size:9px;letter-spacing:1.5px;}
+  .delta-block{grid-template-columns:1fr;gap:12px;padding:16px 16px;}
+  .delta-rates{text-align:left;}
+  .delta-val{font-size:28px;}
+  h1{font-size:26px;}
+  .card{padding:16px 14px;}
+  .accent-card{padding:16px 14px;}
+  .qa-row{gap:4px;}
+  .qa-btn{padding:4px 7px;font-size:9px;}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP-SPEZIFISCH
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Slider */
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:2px;
+  background:var(--border);outline:none;cursor:pointer;margin-top:8px;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg);cursor:pointer;
+}
+
+/* Quick-Amount-Buttons */
+.qa-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;align-items:center;}
+.qa-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text-muted);}
+.qa-btn{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:1px;padding:4px 9px;
+  cursor:pointer;transition:all .2s;
+}
+.qa-btn:hover,.qa-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+
+/* Vergleichs-Grid — ein einziges 2×2-Raster */
+.compare-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:12px;
+  margin-bottom:12px;
+  max-width:100%;
+}
+.cmp-card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:16px 20px;position:relative;transition:background .25s;
+  display:flex;flex-direction:column;
+}
+.cmp-card::before{
+  content:'';position:absolute;top:0;left:0;
+  width:3px;height:100%;background:var(--border);
+}
+.cmp-card.reform{border-color:var(--accent);}
+.cmp-card.reform::before{background:var(--accent-lt);}
+.cmp-label{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);
+  margin-bottom:10px;
+  /* Feste Mindesthöhe damit Labels in beiden Spalten gleich hoch sind */
+  min-height:2.8em;
+}
+.cmp-main{
+  font-family:'Playfair Display',serif;font-size:26px;
+  color:var(--accent);line-height:1;margin-bottom:4px;
+}
+.cmp-card.reform .cmp-main{color:var(--accent-lt);}
+.cmp-sub{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);
+}
+
+/* Delta Block */
+.delta-block{
+  background:var(--surface);border:1px solid var(--border);
+  padding:20px 28px;margin-bottom:12px;
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;
+  position:relative;transition:background .25s;
+  min-width:0;
+}
+.delta-block::before{
+  content:'';position:absolute;top:0;left:0;
+  width:3px;height:100%;background:var(--border);
+  transition:background .25s;
+}
+.delta-block.positive{border-color:var(--pos);}
+.delta-block.positive::before{background:var(--pos);}
+.delta-block.negative{border-color:var(--neg);}
+.delta-block.negative::before{background:var(--neg);}
+.delta-label{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);
+  margin-bottom:8px;
+}
+.delta-val{
+  font-family:'Playfair Display',serif;font-size:36px;line-height:1;
+  margin-bottom:4px;
+}
+.delta-val.positive{color:var(--pos);}
+.delta-val.negative{color:var(--neg);}
+.delta-meta{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:1px;color:var(--text-muted);
+}
+.delta-rates{
+  text-align:right;font-family:'IBM Plex Mono',monospace;
+  font-size:10px;line-height:2;color:var(--text-muted);
+}
+.delta-rates span{font-size:12px;}
+
+/* Chart Legend */
+.chart-legend{
+  display:flex;gap:24px;margin-top:14px;
+}
+.legend-item{
+  display:flex;align-items:center;gap:8px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);
+}
+.legend-line{width:20px;height:2px;}
+.legend-line.solid{background:var(--accent);}
+.legend-line.dashed{
+  border-top:2px dashed var(--accent-lt);
+  background:none;height:0;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Theme Toggle ─────────────────────────────────────────── -->
+<div class="theme-toggle">
+  <button class="theme-btn" id="btn-dark" onclick="setTheme('dark')" title="Dunkel">
+    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+  <button class="theme-btn" id="btn-system" onclick="setTheme('system')" title="System">
+    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </button>
+  <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Hell">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="badge">§ 32a EStG &middot; Reformvorschlag DIW</div>
+    <h1>Steuerreform<span>-Rechner</span></h1>
+    <p class="subtitle">
+      Aktueller Tarif 2026 vs. Bach/DIW-Vorschlag<br>
+      Mittelstandsbauch &middot; Soli-Wegfall &middot; Spitzensteuersatz 49&nbsp;% ab 90.000&nbsp;&euro;
+    </p>
+    <div class="variant-toggle">
+      <button class="variant-btn active" id="btn-variant-single" onclick="setVariant('single')">Einzelveranlagung</button>
+      <button class="variant-btn" id="btn-variant-joint" onclick="setVariant('joint')">Zusammenveranlagung</button>
+    </div>
+  </header>
+  <!-- Mobile: theme toggle inline (hidden on desktop via CSS) -->
+  <div class="theme-toggle-mobile">
+    <button class="theme-btn" id="btn-dark-m" onclick="setThemeMobile('dark')" title="Dunkel">
+      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="theme-btn" id="btn-system-m" onclick="setThemeMobile('system')" title="System">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    </button>
+    <button class="theme-btn" id="btn-light-m" onclick="setThemeMobile('light')" title="Hell">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+
+  <!-- CARD: Eingabe -->
+  <div class="card">
+    <div class="card-title">Eingabe</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="two-col">
+      <div>
+        <input type="number" id="income" value="55000" min="0" max="500000" step="1000">
+        <div class="hint">Zu versteuerndes Einkommen (zvE) &middot; Jahresbetrag in &euro;</div>
+      </div>
+      <div>
+        <input type="range" id="slider" min="0" max="500000" step="1000" value="55000">
+        <div class="hint" style="display:flex;justify-content:space-between;">
+          <span>0 &euro;</span><span>250k &euro;</span><span>500k &euro;</span>
+        </div>
+      </div>
+    </div>
+    <div class="qa-row">
+      <span class="qa-label">Schnellwahl&thinsp;→</span>
+      <button class="qa-btn" onclick="setIncome(20000)">20k</button>
+      <button class="qa-btn" onclick="setIncome(30000)">30k</button>
+      <button class="qa-btn" onclick="setIncome(45000)">45k</button>
+      <button class="qa-btn" onclick="setIncome(55000)">55k</button>
+      <button class="qa-btn" onclick="setIncome(70000)">70k</button>
+      <button class="qa-btn" onclick="setIncome(90000)">90k</button>
+      <button class="qa-btn" onclick="setIncome(120000)">120k</button>
+      <button class="qa-btn" onclick="setIncome(200000)">200k</button>
+      <button class="qa-btn" onclick="setIncome(300000)">300k</button>
+    </div>
+  </div>
+
+  <!-- Vergleich: 2×2-Grid -->
+  <div class="compare-grid">
+    <div class="cmp-card">
+      <div class="cmp-label">Einkommensteuer &middot; Aktuell</div>
+      <div class="cmp-main" id="res-est-c">—</div>
+      <div class="cmp-sub" id="res-est-c-sub">—</div>
+    </div>
+    <div class="cmp-card reform">
+      <div class="cmp-label">Einkommensteuer &middot; Reform</div>
+      <div class="cmp-main" id="res-est-r">—</div>
+      <div class="cmp-sub" id="res-est-r-sub">—</div>
+    </div>
+    <div class="cmp-card">
+      <div class="cmp-label">Solidaritätszuschlag &middot; Aktuell</div>
+      <div class="cmp-main" id="res-soli-c">—</div>
+      <div class="cmp-sub" id="res-soli-c-sub">—</div>
+    </div>
+    <div class="cmp-card reform">
+      <div class="cmp-label">Solidaritätszuschlag &middot; Reform</div>
+      <div class="cmp-main" style="color:var(--accent-lt)">0 &euro;</div>
+      <div class="cmp-sub">Vollständig abgeschafft</div>
+    </div>
+  </div>
+
+  <!-- Delta -->
+  <div class="delta-block" id="delta-block">
+    <div>
+      <div class="delta-label" id="delta-label-text">Entlastung / Mehrbelastung p.&thinsp;a.</div>
+      <div class="delta-val" id="delta-val">—</div>
+      <div class="delta-meta" id="delta-meta">—</div>
+    </div>
+    <div class="delta-rates">
+      <div>Grenzsteuersatz</div>
+      <div>Aktuell&ensp;<span id="grenz-c" style="color:var(--accent)">—</span></div>
+      <div>Reform&ensp;&ensp;<span id="grenz-r" style="color:var(--accent-lt)">—</span></div>
+      <div style="margin-top:8px;">Effektivsteuersatz</div>
+      <div>Aktuell&ensp;<span id="avg-c" style="color:var(--accent)">—</span></div>
+      <div>Reform&ensp;&ensp;<span id="avg-r" style="color:var(--accent-lt)">—</span></div>
+    </div>
+  </div>
+
+  <!-- ACCENT CARD: Detailaufstellung -->
+  <div class="accent-card">
+    <div class="card-title">Detailaufstellung</div>
+    <div class="result-row">
+      <span class="rl">Einkommensteuer &middot; Aktuell</span>
+      <span class="rv" id="b-est-c">—</span>
+    </div>
+    <div class="result-row">
+      <span class="rl">Einkommensteuer &middot; Reform</span>
+      <span class="rv" id="b-est-r" style="color:var(--accent-lt)">—</span>
+    </div>
+    <div class="result-row">
+      <span class="rl">Solidaritätszuschlag &middot; Aktuell</span>
+      <span class="rv" id="b-soli-c">—</span>
+    </div>
+    <div class="result-row">
+      <span class="rl">Solidaritätszuschlag &middot; Reform</span>
+      <span class="rv" style="color:var(--accent-lt)">0 &euro;</span>
+    </div>
+    <div class="result-row">
+      <span class="rl">Gesamtbelastung &middot; Aktuell</span>
+      <span class="rv" id="b-total-c">—</span>
+    </div>
+    <div class="result-row">
+      <span class="rl">Gesamtbelastung &middot; Reform</span>
+      <span class="rv" id="b-total-r" style="color:var(--accent-lt)">—</span>
+    </div>
+    <div class="result-total">
+      <span class="result-total-label" id="b-delta-label">Entlastung p.&thinsp;a.</span>
+      <span class="result-total-value" id="b-delta-val">—</span>
+    </div>
+    <p class="note">
+      Tarif 2026 gem. § 32a EStG &middot; Grundfreibetrag 12.348 &euro; &middot; Soli-Freigrenze 40.700 &euro; (Einzelveranlagung)<br>
+      Reform Bach/DIW: Mittelstandsbauch abgeflacht &middot; Spitzensteuersatz 49&nbsp;% ab 90.000 &euro; &middot; Soli entfällt<br>
+      Reformtarif = vereinfachte Modellierung, genaue Tarifformel noch nicht veröffentlicht<br>
+      Sozialversicherungsbeiträge nicht berücksichtigt &middot; Kein Rechtsanspruch.
+    </p>
+  </div>
+
+  <!-- CARD: Chart -->
+  <div class="card">
+    <div class="card-title">Grenzsteuersatzverlauf &middot; 0 – 150.000 &euro; zvE</div>
+    <canvas id="chart" height="200"></canvas>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-line solid"></div>
+        <span>Aktuell 2026</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line dashed"></div>
+        <span>Reform (Bach / DIW)</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<footer>&copy; 2026 Robin Glowania &middot; Quelle: Handelsblatt 12.03.2026 &middot; DIW Berlin (Stefan Bach) &middot; BMF &middot; § 32a EStG</footer>
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT — Theme-Block nie ändern
+     ════════════════════════════════════════════════════════════ -->
+<script>
+// ── Theme ──────────────────────────────────────────────────────
+function setTheme(t) {
+  if (t === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('g-theme', t); } catch(e){}
+  document.querySelectorAll('.theme-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('btn-' + t);
+  if (btn) btn.classList.add('active');
+  setTimeout(updateChart, 30);
+  // sync mobile toggle buttons
+  document.querySelectorAll('.theme-toggle-mobile .theme-btn').forEach(function(b){ b.classList.remove('active'); });
+  var mbtn = document.getElementById('btn-' + t + '-m');
+  if (mbtn) mbtn.classList.add('active');
+}
+function setThemeMobile(t){ setTheme(t); }
+(function(){
+  var saved = 'system';
+  try { saved = localStorage.getItem('g-theme') || 'system'; } catch(e){}
+  setTheme(saved);
+})();
+
+// ── Variant Toggle ─────────────────────────────────────────────
+var currentVariant = 'single';
+function setVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('btn-variant-' + v);
+  if (btn) btn.classList.add('active');
+  calculate();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEUER-LOGIK
+// ══════════════════════════════════════════════════════════════
+
+function estCurrent(zvE) {
+  if (zvE <= 12348) return 0;
+  var tax = 0;
+  if (zvE > 12349) {
+    var len1 = 17799 - 12349 + 1;
+    var p1 = Math.min(zvE - 12349, len1);
+    tax += 0.14 * p1 + (0.10 / (2 * len1)) * p1 * p1;
+  }
+  if (zvE > 17800) {
+    var len2 = 69878 - 17800 + 1;
+    var p2 = Math.min(zvE - 17800, len2);
+    tax += 0.24 * p2 + (0.18 / (2 * len2)) * p2 * p2;
+  }
+  if (zvE > 69879) {
+    tax += 0.42 * Math.min(zvE - 69879, 277825 - 69879 + 1);
+  }
+  if (zvE > 277825) {
+    tax += 0.45 * (zvE - 277825);
+  }
+  return Math.max(0, tax);
+}
+
+function soliCurrent(est) {
+  if (est <= 40700) return 0;
+  if (est <= 68000) return Math.min(0.055 * est, 0.20 * (est - 40700));
+  return 0.055 * est;
+}
+
+function estReform(zvE) {
+  if (zvE <= 12348) return 0;
+  var tax = 0;
+  var len = 90000 - 12349;
+  var p = Math.min(zvE - 12349, len);
+  if (p > 0) tax += 0.14 * p + (0.28 / (2 * len)) * p * p;
+  if (zvE > 90000) tax += 0.49 * (zvE - 90000);
+  return Math.max(0, tax);
+}
+
+function grenzCurrent(zvE) {
+  if (zvE <= 12348) return 0;
+  if (zvE <= 17799) return 0.14 + (0.10 / (17799-12349+1)) * (zvE-12349);
+  if (zvE <= 69878) return 0.24 + (0.18 / (69878-17800+1)) * (zvE-17800);
+  if (zvE <= 277825) return 0.42;
+  return 0.45;
+}
+
+function grenzReform(zvE) {
+  if (zvE <= 12348) return 0;
+  if (zvE <= 90000) return 0.14 + (0.28 / (90000-12349)) * (zvE-12349);
+  return 0.49;
+}
+
+function fmt(n) {
+  return n.toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:0}) + '\u00a0\u20ac';
+}
+function pct(n) { return (n*100).toFixed(1)+'\u00a0%'; }
+
+// ── Berechnung ─────────────────────────────────────────────────
+function calculate() {
+  var zvE = parseFloat(document.getElementById('income').value) || 0;
+  var joint = (currentVariant === 'joint');
+
+  var estC, estR, soliC, gC, gR;
+  if (joint) {
+    var h = zvE / 2;
+    estC  = estCurrent(h) * 2;
+    estR  = estReform(h) * 2;
+    soliC = soliCurrent(estC / 2) * 2;
+    gC    = grenzCurrent(h);
+    gR    = grenzReform(h);
+  } else {
+    estC  = estCurrent(zvE);
+    estR  = estReform(zvE);
+    soliC = soliCurrent(estC);
+    gC    = grenzCurrent(zvE);
+    gR    = grenzReform(zvE);
+  }
+
+  var totalC = estC + soliC;
+  var totalR = estR;
+  var delta  = totalC - totalR;
+  var avgC   = zvE > 0 ? totalC / zvE : 0;
+  var avgR   = zvE > 0 ? totalR / zvE : 0;
+
+  // Compare cards
+  document.getElementById('res-est-c').textContent     = fmt(estC);
+  document.getElementById('res-est-c-sub').textContent = 'Eff. Steuersatz\u00a0' + pct(zvE>0?estC/zvE:0);
+  document.getElementById('res-est-r').textContent     = fmt(estR);
+  document.getElementById('res-est-r-sub').textContent = 'Eff. Steuersatz\u00a0' + pct(zvE>0?estR/zvE:0);
+  document.getElementById('res-soli-c').textContent    = fmt(soliC);
+  document.getElementById('res-soli-c-sub').textContent = soliC > 0 ? 'Teilweise f\u00e4llig' : 'Freigrenze \u2013 kein Soli';
+
+  // Delta block
+  var db = document.getElementById('delta-block');
+  var dv = document.getElementById('delta-val');
+  var dm = document.getElementById('delta-meta');
+  var bl = document.getElementById('b-delta-label');
+  var bv = document.getElementById('b-delta-val');
+
+  db.className = 'delta-block' + (delta > 0 ? ' positive' : delta < 0 ? ' negative' : '');
+  if (delta > 0) {
+    dv.textContent = '\u2212\u00a0' + fmt(delta);
+    dv.className = 'delta-val positive';
+    dm.textContent = 'Entlastung \u00b7 ' + pct(zvE>0?delta/zvE:0) + ' des zvE';
+    bl.textContent = 'Entlastung p.\u2009a.';
+    bv.style.color = 'var(--pos)';
+    bv.textContent = '\u2212\u00a0' + fmt(delta);
+  } else if (delta < 0) {
+    dv.textContent = '+\u00a0' + fmt(Math.abs(delta));
+    dv.className = 'delta-val negative';
+    dm.textContent = 'Mehrbelastung \u00b7 ' + pct(zvE>0?Math.abs(delta)/zvE:0) + ' des zvE';
+    bl.textContent = 'Mehrbelastung p.\u2009a.';
+    bv.style.color = 'var(--neg)';
+    bv.textContent = '+\u00a0' + fmt(Math.abs(delta));
+  } else {
+    dv.textContent = '0\u00a0\u20ac';
+    dv.className = 'delta-val';
+    dm.textContent = 'Keine \u00c4nderung';
+    bl.textContent = 'Differenz p.\u2009a.';
+    bv.style.color = 'var(--text)';
+    bv.textContent = '0\u00a0\u20ac';
+  }
+
+  document.getElementById('grenz-c').textContent = pct(gC);
+  document.getElementById('grenz-r').textContent = pct(gR);
+  document.getElementById('avg-c').textContent   = pct(avgC);
+  document.getElementById('avg-r').textContent   = pct(avgR);
+
+  document.getElementById('b-est-c').textContent   = fmt(estC);
+  document.getElementById('b-est-r').textContent   = fmt(estR);
+  document.getElementById('b-soli-c').textContent  = fmt(soliC);
+  document.getElementById('b-total-c').textContent = fmt(totalC);
+  document.getElementById('b-total-r').textContent = fmt(totalR);
+
+  updateChart(zvE);
+  highlightQA(zvE);
+}
+
+// ── Chart ──────────────────────────────────────────────────────
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function updateChart(markerZvE) {
+  var canvas = document.getElementById('chart');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.offsetWidth || 860;
+  var H = 200;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  var pad = {top:14,right:16,bottom:30,left:42};
+  var cw = W - pad.left - pad.right;
+  var ch = H - pad.top - pad.bottom;
+  var maxX = 150000, maxY = 55;
+
+  var xp = function(v){ return pad.left + (v/maxX)*cw; };
+  var yp = function(v){ return pad.top + ch - (v/maxY)*ch; };
+
+  var ca  = getCSSVar('--accent');
+  var cal = getCSSVar('--accent-lt');
+  var cb  = getCSSVar('--border');
+  var cm  = getCSSVar('--text-muted');
+
+  // Grid
+  ctx.font = '9px IBM Plex Mono, monospace';
+  for (var g = 0; g <= 50; g += 10) {
+    ctx.strokeStyle = cb; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pad.left, yp(g)); ctx.lineTo(pad.left+cw, yp(g)); ctx.stroke();
+    ctx.fillStyle = cm; ctx.textAlign = 'right';
+    ctx.fillText(g+'%', pad.left-4, yp(g)+3);
+  }
+  ctx.textAlign = 'center'; ctx.fillStyle = cm;
+  for (var v = 0; v <= 150000; v += 30000) {
+    ctx.fillText((v/1000)+'k', xp(v), H-pad.bottom+13);
+  }
+
+  // Data
+  var pts = [];
+  for (var z = 0; z <= 150000; z += 500) {
+    pts.push({z:z, gC:grenzCurrent(z)*100, gR:grenzReform(z)*100});
+  }
+
+  // Shade between lines
+  ctx.beginPath();
+  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gC)):ctx.lineTo(xp(d.z),yp(d.gC)); });
+  for (var i=pts.length-1;i>=0;i--){ ctx.lineTo(xp(pts[i].z),yp(pts[i].gR)); }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(93,158,122,0.06)';
+  ctx.fill();
+
+  // Aktuell
+  ctx.beginPath(); ctx.strokeStyle=ca; ctx.lineWidth=2; ctx.setLineDash([]);
+  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gC)):ctx.lineTo(xp(d.z),yp(d.gC)); });
+  ctx.stroke();
+
+  // Reform
+  ctx.beginPath(); ctx.strokeStyle=cal; ctx.lineWidth=2; ctx.setLineDash([5,3]);
+  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gR)):ctx.lineTo(xp(d.z),yp(d.gR)); });
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Marker
+  if (markerZvE !== undefined && markerZvE <= maxX) {
+    ctx.strokeStyle = ca+'55'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath();
+    ctx.moveTo(xp(markerZvE), pad.top);
+    ctx.lineTo(xp(markerZvE), pad.top+ch);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+// ── Quick Amount ───────────────────────────────────────────────
+var presets = [20000,30000,45000,55000,70000,90000,120000,200000,300000];
+function setIncome(val) {
+  document.getElementById('income').value = val;
+  document.getElementById('slider').value = val;
+  calculate();
+}
+function highlightQA(zvE) {
+  document.querySelectorAll('.qa-btn').forEach(function(b, i){
+    b.classList.toggle('active', presets[i] === zvE);
+  });
+}
+
+document.getElementById('income').addEventListener('input', function(){
+  document.getElementById('slider').value = this.value;
+  calculate();
+});
+document.getElementById('slider').addEventListener('input', function(){
+  document.getElementById('income').value = this.value;
+  calculate();
+});
+window.addEventListener('resize', function(){ calculate(); });
+
+calculate();
+</script>
+</body>
+</html>
