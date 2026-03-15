@@ -383,7 +383,6 @@ input[type=range]::-webkit-slider-thumb{
 
   <!-- HEADER -->
   <header>
-    <div class="badge">§ 32a EStG &middot; Reformvorschlag DIW</div>
     <h1>Steuerreform<span>-Rechner</span></h1>
     <p class="subtitle">
       Aktueller Tarif 2026 vs. Bach/DIW-Vorschlag<br>
@@ -519,7 +518,7 @@ input[type=range]::-webkit-slider-thumb{
   <!-- CARD: Chart -->
   <div class="card">
     <div class="card-title">Grenzsteuersatzverlauf &middot; 0 – 150.000 &euro; zvE</div>
-    <canvas id="chart" height="200"></canvas>
+    <canvas id="chart" style="display:block;width:100%;"></canvas>
     <div class="chart-legend">
       <div class="legend-item">
         <div class="legend-line solid"></div>
@@ -534,7 +533,7 @@ input[type=range]::-webkit-slider-thumb{
 
 </div><!-- /.container -->
 
-<footer>&copy; 2026 Robin Glowania &middot; Quelle: Handelsblatt 12.03.2026 &middot; DIW Berlin (Stefan Bach) &middot; BMF &middot; § 32a EStG</footer>
+<footer>&copy; Robin Glowania &middot; Quelle: Handelsblatt 12.03.2026 &middot; DIW Berlin (Stefan Bach) &middot; BMF &middot; § 32a EStG</footer>
 
 <!-- ════════════════════════════════════════════════════════════
      JAVASCRIPT — Theme-Block nie ändern
@@ -714,78 +713,146 @@ function calculate() {
 }
 
 // ── Chart ──────────────────────────────────────────────────────
-function getCSSVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// Resolve CSS variable to a usable color string with fallback
+function cssColor(name, fallback) {
+  var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
 }
 
 function updateChart(markerZvE) {
   var canvas = document.getElementById('chart');
   var ctx = canvas.getContext('2d');
-  var W = canvas.offsetWidth || 860;
-  var H = 200;
+
+  // Sizing: use offsetWidth, fixed logical height
+  var W = canvas.parentElement.clientWidth || 800;
+  var H = 220;
   var dpr = window.devicePixelRatio || 1;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width  = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
-  var pad = {top:14,right:16,bottom:30,left:42};
+  var pad = {top:20, right:20, bottom:36, left:46};
   var cw = W - pad.left - pad.right;
-  var ch = H - pad.top - pad.bottom;
+  var ch = H - pad.top  - pad.bottom;
   var maxX = 150000, maxY = 55;
 
-  var xp = function(v){ return pad.left + (v/maxX)*cw; };
-  var yp = function(v){ return pad.top + ch - (v/maxY)*ch; };
+  var xp = function(v){ return pad.left + (v / maxX) * cw; };
+  var yp = function(v){ return pad.top  + ch - (v / maxY) * ch; };
 
-  var ca  = getCSSVar('--accent');
-  var cal = getCSSVar('--accent-lt');
-  var cb  = getCSSVar('--border');
-  var cm  = getCSSVar('--text-muted');
+  // Colors — read from CSS vars with safe fallbacks
+  var isDark = !document.documentElement.getAttribute('data-theme')
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+    : document.documentElement.getAttribute('data-theme') !== 'light';
 
-  // Grid
-  ctx.font = '9px IBM Plex Mono, monospace';
+  var CA  = isDark ? '#5d9e7a' : '#2e7a50';   // --accent
+  var CAL = isDark ? '#89c4a2' : '#1e5c3a';   // --accent-lt
+  var CB  = isDark ? '#213328' : '#bdd8c8';   // --border
+  var CM  = isDark ? '#6e9480' : '#4d7a5e';   // --text-muted
+  var BG  = isDark ? '#13201a' : '#ffffff';   // --surface
+
+  // ── Background
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Horizontal grid lines + Y labels
+  ctx.font = '10px monospace';
+  ctx.textBaseline = 'middle';
   for (var g = 0; g <= 50; g += 10) {
-    ctx.strokeStyle = cb; ctx.lineWidth = 1; ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(pad.left, yp(g)); ctx.lineTo(pad.left+cw, yp(g)); ctx.stroke();
-    ctx.fillStyle = cm; ctx.textAlign = 'right';
-    ctx.fillText(g+'%', pad.left-4, yp(g)+3);
+    ctx.strokeStyle = CB;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, yp(g));
+    ctx.lineTo(pad.left + cw, yp(g));
+    ctx.stroke();
+    ctx.fillStyle = CM;
+    ctx.textAlign = 'right';
+    ctx.fillText(g + ' %', pad.left - 6, yp(g));
   }
-  ctx.textAlign = 'center'; ctx.fillStyle = cm;
+
+  // ── X axis labels
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = CM;
   for (var v = 0; v <= 150000; v += 30000) {
-    ctx.fillText((v/1000)+'k', xp(v), H-pad.bottom+13);
+    var label = v === 0 ? '0' : (v/1000) + 'k';
+    ctx.fillText(label, xp(v), H - pad.bottom + 6);
   }
 
-  // Data
+  // ── X axis label unit
+  ctx.textAlign = 'right';
+  ctx.fillText('zvE', pad.left + cw, H - pad.bottom + 6);
+
+  // ── Data points
   var pts = [];
-  for (var z = 0; z <= 150000; z += 500) {
-    pts.push({z:z, gC:grenzCurrent(z)*100, gR:grenzReform(z)*100});
+  for (var z = 0; z <= 150000; z += 200) {
+    pts.push({ z: z, gC: grenzCurrent(z) * 100, gR: grenzReform(z) * 100 });
   }
 
-  // Shade between lines
+  // ── Shade between lines (reform lower = relief area)
   ctx.beginPath();
-  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gC)):ctx.lineTo(xp(d.z),yp(d.gC)); });
-  for (var i=pts.length-1;i>=0;i--){ ctx.lineTo(xp(pts[i].z),yp(pts[i].gR)); }
+  pts.forEach(function(d, i) {
+    i === 0 ? ctx.moveTo(xp(d.z), yp(d.gC)) : ctx.lineTo(xp(d.z), yp(d.gC));
+  });
+  for (var i = pts.length - 1; i >= 0; i--) {
+    ctx.lineTo(xp(pts[i].z), yp(pts[i].gR));
+  }
   ctx.closePath();
-  ctx.fillStyle = 'rgba(93,158,122,0.06)';
+  ctx.fillStyle = isDark ? 'rgba(93,158,122,0.10)' : 'rgba(46,122,80,0.07)';
   ctx.fill();
 
-  // Aktuell
-  ctx.beginPath(); ctx.strokeStyle=ca; ctx.lineWidth=2; ctx.setLineDash([]);
-  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gC)):ctx.lineTo(xp(d.z),yp(d.gC)); });
+  // ── Line: aktuell (solid)
+  ctx.beginPath();
+  ctx.strokeStyle = CA;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([]);
+  pts.forEach(function(d, i) {
+    i === 0 ? ctx.moveTo(xp(d.z), yp(d.gC)) : ctx.lineTo(xp(d.z), yp(d.gC));
+  });
   ctx.stroke();
 
-  // Reform
-  ctx.beginPath(); ctx.strokeStyle=cal; ctx.lineWidth=2; ctx.setLineDash([5,3]);
-  pts.forEach(function(d,i){ i===0?ctx.moveTo(xp(d.z),yp(d.gR)):ctx.lineTo(xp(d.z),yp(d.gR)); });
-  ctx.stroke(); ctx.setLineDash([]);
+  // ── Line: reform (dashed)
+  ctx.beginPath();
+  ctx.strokeStyle = CAL;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([6, 4]);
+  pts.forEach(function(d, i) {
+    i === 0 ? ctx.moveTo(xp(d.z), yp(d.gR)) : ctx.lineTo(xp(d.z), yp(d.gR));
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
 
-  // Marker
-  if (markerZvE !== undefined && markerZvE <= maxX) {
-    ctx.strokeStyle = ca+'55'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  // ── Current zvE marker (vertical line)
+  if (markerZvE !== undefined && markerZvE > 0 && markerZvE <= maxX) {
+    ctx.strokeStyle = CA;
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
     ctx.beginPath();
     ctx.moveTo(xp(markerZvE), pad.top);
-    ctx.lineTo(xp(markerZvE), pad.top+ch);
-    ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineTo(xp(markerZvE), pad.top + ch);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    // Dot on each line at marker
+    var gcM = grenzCurrent(markerZvE) * 100;
+    var grM = grenzReform(markerZvE)  * 100;
+    [{ y: gcM, c: CA }, { y: grM, c: CAL }].forEach(function(pt) {
+      ctx.beginPath();
+      ctx.arc(xp(markerZvE), yp(pt.y), 4, 0, Math.PI * 2);
+      ctx.fillStyle = BG;
+      ctx.fill();
+      ctx.strokeStyle = pt.c;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
   }
 }
 
